@@ -8,8 +8,6 @@ import (
 	"github.com/astaxie/beego/logs"
 	"github.com/blocktree/go-openw-server/open_base/major"
 	"github.com/blocktree/go-openw-server/open_base/model"
-	"github.com/blocktree/go-openw-server/open_scanner/rpc"
-	"github.com/blocktree/go-openw-server/open_scanner/rpc/dto"
 	"github.com/blocktree/openwallet/v2/assets"
 	"github.com/blocktree/openwallet/v2/common/file"
 	"github.com/blocktree/openwallet/v2/log"
@@ -21,6 +19,8 @@ import (
 	"github.com/godaddy-x/jorm/sqlc"
 	"github.com/godaddy-x/jorm/sqld"
 	"github.com/godaddy-x/jorm/util"
+	"github.com/nbit99/open_scanner/rpc"
+	"github.com/nbit99/open_scanner/rpc/dto"
 	"github.com/shopspring/decimal"
 	"path/filepath"
 	"strings"
@@ -140,7 +140,7 @@ func (o *OpenWScanner) StartWallet() {
 func (o *OpenWScanner) CheckBlockScannerState() error {
 	go func() {
 		pause := false
-		for ; ; {
+		for {
 			time.Sleep(20 * time.Second)
 			mongo, err := new(sqld.MGOManager).Get()
 			if err != nil {

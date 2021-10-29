@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"github.com/blocktree/go-openw-server/open_base/common"
 	"github.com/blocktree/go-openw-server/open_base/model"
-	"github.com/blocktree/go-openw-server/open_scanner"
-	"github.com/blocktree/go-openw-server/open_scanner/rpc/dto"
 	"github.com/blocktree/openwallet/v2/openwallet"
 	"github.com/godaddy-x/jorm/sqlc"
 	"github.com/godaddy-x/jorm/sqld"
 	"github.com/godaddy-x/jorm/util"
+	"github.com/nbit99/open_scanner"
+	"github.com/nbit99/open_scanner/rpc/dto"
 	"time"
 )
 

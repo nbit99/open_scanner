@@ -1,7 +1,7 @@
 package service
 
 import (
-	"github.com/blocktree/go-openw-server/open_scanner/rpc/dto"
+	"github.com/nbit99/open_scanner/rpc/dto"
 )
 
 type WalletApiService interface {

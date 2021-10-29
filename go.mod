@@ -1,4 +1,4 @@
-module github.com/blocktree/go-openw-server/open_scanner
+module github.com/nbit99/open_scanner
 
 go 1.12
 
