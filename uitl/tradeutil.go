@@ -2,8 +2,6 @@ package tradeutil
 
 import (
 	"fmt"
-	"github.com/blocktree/go-openw-server/open_base/major"
-	"github.com/blocktree/go-openw-server/open_base/model"
 	"github.com/blocktree/openwallet/v2/openwallet"
 	"github.com/godaddy-x/jorm/amqp"
 	"github.com/godaddy-x/jorm/cache/redis"
@@ -13,6 +11,8 @@ import (
 	"github.com/godaddy-x/jorm/sqlc"
 	"github.com/godaddy-x/jorm/sqld"
 	"github.com/godaddy-x/jorm/util"
+	"github.com/nbit99/open_base/major"
+	"github.com/nbit99/open_base/model"
 	"github.com/nbit99/open_scanner/rpc/dto"
 	"github.com/shopspring/decimal"
 	"strings"

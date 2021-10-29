@@ -1,12 +1,12 @@
 package tradeutil
 
 import (
-	"github.com/blocktree/go-openw-server/open_base/model"
 	"github.com/godaddy-x/jorm/cache/redis"
 	"github.com/godaddy-x/jorm/exception"
 	"github.com/godaddy-x/jorm/sqlc"
 	"github.com/godaddy-x/jorm/sqld"
 	"github.com/godaddy-x/jorm/util"
+	"github.com/nbit99/open_base/model"
 )
 
 const (

@@ -1,9 +1,9 @@
 package dto
 
 import (
-	"github.com/blocktree/go-openw-server/open_base/major"
-	"github.com/blocktree/go-openw-server/open_base/model"
 	"github.com/blocktree/openwallet/v2/openwallet"
+	"github.com/nbit99/open_base/major"
+	"github.com/nbit99/open_base/model"
 )
 
 type BatchCreateAddressReq struct {

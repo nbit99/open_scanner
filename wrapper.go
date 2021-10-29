@@ -2,7 +2,6 @@ package open_scanner
 
 import (
 	"errors"
-	"github.com/blocktree/go-openw-server/open_base/model"
 	"github.com/blocktree/openwallet/v2/common"
 	"github.com/blocktree/openwallet/v2/hdkeystore"
 	"github.com/blocktree/openwallet/v2/log"
@@ -10,6 +9,7 @@ import (
 	"github.com/godaddy-x/jorm/sqlc"
 	"github.com/godaddy-x/jorm/sqld"
 	"github.com/godaddy-x/jorm/util"
+	"github.com/nbit99/open_base/model"
 	"strings"
 	"time"
 )
