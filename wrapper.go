@@ -247,7 +247,8 @@ func (w *RpcWrapper) GetAddressList(offset, limit int, cols ...interface{}) ([]*
 }
 
 func (w *RpcWrapper) getAddressListBySymbol(symbol string, offset, limit int, cols ...interface{}) ([]*openwallet.Address, error) {
-	sql := sqlc.M(model.OwAddress{}).Eq("appID", w.AppID).Eq("symbol", symbol).Eq("state", 1)
+	//sql := sqlc.M(model.OwAddress{}).Eq("appID", w.AppID).Eq("symbol", symbol).Eq("state", 1)
+	sql := sqlc.M(model.OwAddress{}).Eq("appID", w.AppID).Eq("symbol", symbol).NotEq("balance", "0").Eq("state", 1)
 	if limit > 0 {
 		sql.Offset(int64(offset), int64(limit))
 	} else {
