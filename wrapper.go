@@ -14,6 +14,7 @@ import (
 	"time"
 )
 
+
 type RpcWrapper struct {
 	*openwallet.WalletDAIBase
 	AppID     string
@@ -226,6 +227,22 @@ func (w *RpcWrapper) GetAddress(address string) (*openwallet.Address, error) {
 	return query.ToAddress(), nil
 }
 
+func (w *RpcWrapper) checkAddressHaveToken(address string, sql *sqlc.Cnd) bool {
+	sqlTemp := sql
+	sqlTemp.Eq("address", address).NotEq("balance", "0")
+	mongo, err := new(sqld.MGOManager).Get()
+	if err != nil {
+		return false
+	}
+	defer mongo.Close()
+	count, err := mongo.Count(sqlTemp)
+	if err != nil || count == 0 {
+		return false
+	}
+	return true
+}
+
+
 func (w *RpcWrapper) GetAddressList(offset, limit int, cols ...interface{}) ([]*openwallet.Address, error) {
 	if len(w.AppID) == 0 {
 		return nil, util.Error("Wrapper AppID is nil")
@@ -233,36 +250,61 @@ func (w *RpcWrapper) GetAddressList(offset, limit int, cols ...interface{}) ([]*
 	if len(w.Symbol) == 0 {
 		return nil, util.Error("Wrapper Symbol is nil")
 	}
-	result, err := w.getAddressListBySymbol(w.Symbol, offset, limit, cols...)
-	if err != nil {
-		return nil, err
-	}
-	if len(result) == 0 && w.Symbol == model.ETH { // 如是ETH链则二次判定是否存在TRUE链公用地址
-		result, err = w.getAddressListBySymbol(model.TRUE, offset, limit, cols...)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return result, nil
-}
 
-func (w *RpcWrapper) getAddressListBySymbol(symbol string, offset, limit int, cols ...interface{}) ([]*openwallet.Address, error) {
-	//sql := sqlc.M(model.OwAddress{}).Eq("appID", w.AppID).Eq("symbol", symbol).Eq("state", 1)
-	sql := sqlc.M(model.OwAddress{}).Eq("appID", w.AppID).Eq("symbol", symbol).NotEq("balance", "0").Eq("state", 1)
-	if limit > 0 {
-		sql.Offset(int64(offset), int64(limit))
-	} else {
-		sql.Offset(int64(offset), int64(50))
-	}
+	getTokenAddress := false
+	sql := sqlc.M(model.OwAddress{}).Eq("appID", w.AppID).Eq("state", 1)
+	sqlToken := sqlc.M(model.OwAddressToken{}).Eq("appID", w.AppID).Eq("symbol", w.Symbol).Eq("state", 1)
+
 	if cols != nil && len(cols) > 0 {
 		for k := 0; k < len(cols); k += 2 {
 			key, ok := cols[k].(string)
 			if !ok || len(key) == 0 {
 				continue
 			}
+			if key == "ContractID" {
+				getTokenAddress = true
+				sqlToken.Eq(util.LowerFirst(key), cols[k+1])
+				continue
+			}
 			sql.Eq(util.LowerFirst(key), cols[k+1])
+			sqlToken.Eq(util.LowerFirst(key), cols[k+1])
 		}
 	}
+
+	var result []*openwallet.Address
+	if getTokenAddress {
+		result, err := w.getAddressListBySymbol(w.Symbol, offset, limit, sql)
+		if err != nil {
+			return nil, err
+		}
+		for _, v := range result {
+			if w.checkAddressHaveToken(v.Address, sqlToken) {
+				result = append(result, v)
+			}
+		}
+	} else {
+		result, err := w.getAddressListBySymbol(w.Symbol, offset, limit, sql.NotEq("balance", 0))
+		if err != nil {
+			return nil, err
+		}
+		if len(result) == 0 && w.Symbol == model.ETH { // 如是ETH链则二次判定是否存在TRUE链公用地址
+			result, err = w.getAddressListBySymbol(model.TRUE, offset, limit, sql.NotEq("balance", 0))
+			if err != nil {
+				return nil, err
+			}
+		}
+		return result, nil
+	}
+	return result, nil
+}
+
+func (w *RpcWrapper) getAddressListBySymbol(symbol string, offset, limit int, sql *sqlc.Cnd) ([]*openwallet.Address, error) {
+	if limit > 0 {
+		sql.Offset(int64(offset), int64(limit))
+	} else {
+		sql.Offset(int64(offset), int64(50))
+	}
+	sql.Eq("symbol", symbol)
 	mongo, err := new(sqld.MGOManager).Get()
 	if err != nil {
 		return nil, err
