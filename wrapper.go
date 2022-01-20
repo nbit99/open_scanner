@@ -2,6 +2,7 @@ package open_scanner
 
 import (
 	"errors"
+	"fmt"
 	"github.com/blocktree/openwallet/v2/common"
 	"github.com/blocktree/openwallet/v2/hdkeystore"
 	"github.com/blocktree/openwallet/v2/log"
@@ -271,17 +272,18 @@ func (w *RpcWrapper) GetAddressList(offset, limit int, cols ...interface{}) ([]*
 		}
 	}
 
-	var result []*openwallet.Address
 	if getTokenAddress {
+		var ret []*openwallet.Address
 		result, err := w.getAddressListBySymbol(w.Symbol, offset, limit, sql)
 		if err != nil {
 			return nil, err
 		}
 		for _, v := range result {
 			if w.checkAddressHaveToken(v.Address, sqlToken) {
-				result = append(result, v)
+				ret = append(ret, v)
 			}
 		}
+		return ret, nil
 	} else {
 		result, err := w.getAddressListBySymbol(w.Symbol, offset, limit, sql.NotEq("balance", 0))
 		if err != nil {
@@ -295,7 +297,7 @@ func (w *RpcWrapper) GetAddressList(offset, limit int, cols ...interface{}) ([]*
 		}
 		return result, nil
 	}
-	return result, nil
+	return nil, fmt.Errorf("something error not match mode")
 }
 
 func (w *RpcWrapper) getAddressListBySymbol(symbol string, offset, limit int, sql *sqlc.Cnd) ([]*openwallet.Address, error) {
