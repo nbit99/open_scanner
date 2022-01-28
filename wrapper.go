@@ -15,7 +15,6 @@ import (
 	"time"
 )
 
-
 type RpcWrapper struct {
 	*openwallet.WalletDAIBase
 	AppID     string
@@ -228,19 +227,33 @@ func (w *RpcWrapper) GetAddress(address string) (*openwallet.Address, error) {
 	return query.ToAddress(), nil
 }
 
-func (w *RpcWrapper) checkAddressHaveToken(address string, sql *sqlc.Cnd) bool {
-	sqlTemp := sql
-	sqlTemp.Eq("address", address).NotEq("balance", "0")
+//获取ow_address_token表中所有该合约的有余额的地址，返回map
+func(w RpcWrapper) getAllTokenAddressMap(query *sqlc.Cnd) (map[string]bool, error) {
+	query.Limit(1, 100)
 	mongo, err := new(sqld.MGOManager).Get()
 	if err != nil {
-		return false
+		return nil, err
 	}
 	defer mongo.Close()
-	count, err := mongo.Count(sqlTemp)
-	if err != nil || count == 0 {
-		return false
+
+	if _, err := mongo.Count(query); err != nil {
+		return nil, util.Error("获取账号地址列表统计数失败")
 	}
-	return true
+	pagin := query.Pagination
+	addrMap := make(map[string]bool, 0)
+	for i := int64(1); i <= pagin.PageCount; i++ {
+		addressList := []*model.OwAddressToken{}
+		if err := mongo.FindList(query.Limit(i, pagin.PageSize), &addressList); err != nil {
+			continue
+		}
+
+		for _, addr := range addressList {
+			if _, exist := addrMap[addr.Address]; !exist {
+				addrMap[addr.Address] = true
+			}
+		}
+	}
+	return addrMap, nil
 }
 
 
@@ -254,7 +267,7 @@ func (w *RpcWrapper) GetAddressList(offset, limit int, cols ...interface{}) ([]*
 
 	getTokenAddress := false
 	sql := sqlc.M(model.OwAddress{}).Eq("appID", w.AppID).Eq("state", 1)
-	sqlToken := sqlc.M(model.OwAddressToken{}).Eq("appID", w.AppID).Eq("symbol", w.Symbol).Eq("state", 1)
+	sqlToken := sqlc.M(model.OwAddressToken{}).Eq("appID", w.AppID).Eq("symbol", w.Symbol).NotEq("balance", "0").Eq("state", 1)
 
 	if cols != nil && len(cols) > 0 {
 		for k := 0; k < len(cols); k += 2 {
@@ -278,8 +291,15 @@ func (w *RpcWrapper) GetAddressList(offset, limit int, cols ...interface{}) ([]*
 		if err != nil {
 			return nil, err
 		}
+
+		//获取ow_address_token表中所有该合约的有余额的地址，返回map
+		addressTokenMap, err := w.getAllTokenAddressMap(sqlToken)
+		if err != nil {
+			return nil, err
+		}
+
 		for _, v := range result {
-			if w.checkAddressHaveToken(v.Address, sqlToken) {
+			if _, exist := addressTokenMap[v.Address]; exist {
 				ret = append(ret, v)
 			}
 		}
