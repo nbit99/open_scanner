@@ -286,7 +286,8 @@ func (w *RpcWrapper) GetAddressList(offset, limit int, cols ...interface{}) ([]*
 	}
 
 	if getTokenAddress {
-		var ret []*openwallet.Address
+		//var ret []*openwallet.Address
+		ret := make([]*openwallet.Address, 0)
 		result, err := w.getAddressListBySymbol(w.Symbol, offset, limit, sql)
 		if err != nil {
 			return nil, err
