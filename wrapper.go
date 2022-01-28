@@ -297,12 +297,12 @@ func (w *RpcWrapper) GetAddressList(offset, limit int, cols ...interface{}) ([]*
 		if err != nil {
 			return nil, err
 		}
-
 		for _, v := range result {
 			if _, exist := addressTokenMap[v.Address]; exist {
 				ret = append(ret, v)
 			}
 		}
+		log.Info("token address symbol:" + w.Symbol + "," + ",address token map size:", len(addressTokenMap), ",result size:", len(result), ",ret size:", len(ret))
 		return ret, nil
 	} else {
 		result, err := w.getAddressListBySymbol(w.Symbol, offset, limit, sql.NotEq("balance", 0))
