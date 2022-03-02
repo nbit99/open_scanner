@@ -306,12 +306,12 @@ func (w *RpcWrapper) GetAddressList(offset, limit int, cols ...interface{}) ([]*
 		log.Info("token address symbol:" + w.Symbol + "," + ",address token map size:", len(addressTokenMap), ",result size:", len(result), ",ret size:", len(ret))
 		return ret, nil
 	} else {
-		result, err := w.getAddressListBySymbol(w.Symbol, offset, limit, sql.NotEq("balance", 0))
+		result, err := w.getAddressListBySymbol(w.Symbol, offset, limit, sql.NotEq("balance", "0"))
 		if err != nil {
 			return nil, err
 		}
 		if len(result) == 0 && w.Symbol == model.ETH { // 如是ETH链则二次判定是否存在TRUE链公用地址
-			result, err = w.getAddressListBySymbol(model.TRUE, offset, limit, sql.NotEq("balance", 0))
+			result, err = w.getAddressListBySymbol(model.TRUE, offset, limit, sql.NotEq("balance", "0"))
 			if err != nil {
 				return nil, err
 			}
