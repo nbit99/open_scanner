@@ -2,7 +2,7 @@ package tradeutil
 
 import (
 	"fmt"
-	"github.com/blocktree/openwallet/v2/openwallet"
+	"github.com/nbit99/openwallet/v2/openwallet"
 	"github.com/godaddy-x/jorm/amqp"
 	"github.com/godaddy-x/jorm/cache/redis"
 	"github.com/godaddy-x/jorm/consul"
