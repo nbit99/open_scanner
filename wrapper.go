@@ -15,6 +15,10 @@ import (
 	"time"
 )
 
+const (
+	FilterBalanceKey = "FilterBalance"
+)
+
 type RpcWrapper struct {
 	*openwallet.WalletDAIBase
 	AppID     string
@@ -256,7 +260,6 @@ func(w RpcWrapper) getAllTokenAddressMap(query *sqlc.Cnd) (map[string]bool, erro
 	return addrMap, nil
 }
 
-
 func (w *RpcWrapper) GetAddressList(offset, limit int, cols ...interface{}) ([]*openwallet.Address, error) {
 	if len(w.AppID) == 0 {
 		return nil, util.Error("Wrapper AppID is nil")
@@ -266,6 +269,7 @@ func (w *RpcWrapper) GetAddressList(offset, limit int, cols ...interface{}) ([]*
 	}
 
 	getTokenAddress := false
+	filterBalance := true// 过滤掉余额为0的地址 默认true
 	sql := sqlc.M(model.OwAddress{}).Eq("appID", w.AppID).Eq("state", 1)
 	sqlToken := sqlc.M(model.OwAddressToken{}).Eq("appID", w.AppID).Eq("symbol", w.Symbol).NotEq("balance", "0").Eq("state", 1)
 
@@ -280,8 +284,15 @@ func (w *RpcWrapper) GetAddressList(offset, limit int, cols ...interface{}) ([]*
 				sqlToken.Eq(util.LowerFirst(key), cols[k+1])
 				continue
 			}
-			sql.Eq(util.LowerFirst(key), cols[k+1])
-			sqlToken.Eq(util.LowerFirst(key), cols[k+1])
+
+			if key == FilterBalanceKey {
+				filterBalance = cols[k+1].(bool)
+			}
+
+			if key != FilterBalanceKey {//非sql条件
+				sql.Eq(util.LowerFirst(key), cols[k+1])
+				sqlToken.Eq(util.LowerFirst(key), cols[k+1])
+			}
 		}
 	}
 
@@ -315,6 +326,10 @@ func (w *RpcWrapper) GetAddressList(offset, limit int, cols ...interface{}) ([]*
 			if err != nil {
 				return nil, err
 			}
+		}
+
+		if !filterBalance {//不需要过滤0地址
+			return result, nil
 		}
 		addrHaveBalance := make([]*openwallet.Address, 0)
 		for _, a := range result {
