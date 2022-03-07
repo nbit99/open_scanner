@@ -3,14 +3,14 @@ package open_scanner
 import (
 	"errors"
 	"fmt"
-	"github.com/nbit99/openwallet/v2/common"
-	"github.com/nbit99/openwallet/v2/hdkeystore"
-	"github.com/nbit99/openwallet/v2/log"
-	"github.com/nbit99/openwallet/v2/openwallet"
 	"github.com/godaddy-x/jorm/sqlc"
 	"github.com/godaddy-x/jorm/sqld"
 	"github.com/godaddy-x/jorm/util"
 	"github.com/nbit99/open_base/model"
+	"github.com/nbit99/openwallet/v2/common"
+	"github.com/nbit99/openwallet/v2/hdkeystore"
+	"github.com/nbit99/openwallet/v2/log"
+	"github.com/nbit99/openwallet/v2/openwallet"
 	"strings"
 	"time"
 )
@@ -306,17 +306,24 @@ func (w *RpcWrapper) GetAddressList(offset, limit int, cols ...interface{}) ([]*
 		log.Info("token address symbol:" + w.Symbol + "," + ",address token map size:", len(addressTokenMap), ",result size:", len(result), ",ret size:", len(ret))
 		return ret, nil
 	} else {
-		result, err := w.getAddressListBySymbol(w.Symbol, offset, limit, sql.NotEq("balance", "0"))
+		result, err := w.getAddressListBySymbol(w.Symbol, offset, limit, sql)
 		if err != nil {
 			return nil, err
 		}
 		if len(result) == 0 && w.Symbol == model.ETH { // 如是ETH链则二次判定是否存在TRUE链公用地址
-			result, err = w.getAddressListBySymbol(model.TRUE, offset, limit, sql.NotEq("balance", "0"))
+			result, err = w.getAddressListBySymbol(model.TRUE, offset, limit, sql)
 			if err != nil {
 				return nil, err
 			}
 		}
-		return result, nil
+		addrHaveBalance := make([]*openwallet.Address, 0)
+		for _, a := range result {
+			if a.Balance != "0" {
+				addrHaveBalance = append(addrHaveBalance, a)
+			}
+		}
+
+		return addrHaveBalance, nil
 	}
 	return nil, fmt.Errorf("something error not match mode")
 }
