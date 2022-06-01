@@ -336,9 +336,9 @@ func (w *RpcWrapper) GetAddressListContainsBalance(offset, limit int, cols ...in
 	}
 
 	if getTokenAddress {
-		return w.getAddressesByQuery(sql)
-	} else {
 		return w.getTokenAddressesByQuery(sqlToken)
+	} else {
+		return w.getAddressesByQuery(sql)
 	}
 	return nil, fmt.Errorf("something error not match mode")
 }
