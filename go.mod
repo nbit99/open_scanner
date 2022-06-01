@@ -13,3 +13,5 @@ require (
 )
 
 //replace github.com/nbit99/open_base => ../open_base
+
+replace github.com/nbit99/openwallet/v2 => ../openwallet

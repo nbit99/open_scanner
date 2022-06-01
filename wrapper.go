@@ -260,6 +260,89 @@ func(w RpcWrapper) getAllTokenAddressMap(query *sqlc.Cnd) (map[string]bool, erro
 	return addrMap, nil
 }
 
+
+func(w RpcWrapper) getTokenAddressesByQuery(query *sqlc.Cnd) ([]string, error) {
+	mongo, err := new(sqld.MGOManager).Get()
+	if err != nil {
+		return nil, err
+	}
+	defer mongo.Close()
+	addressList := []*model.OwAddressToken{}
+	if err := mongo.FindList(query, &addressList); err != nil {
+		return nil, util.Error("获取账号地址列表统计数失败")
+	}
+
+	addressArray := make([]string, 0)
+	for _, addr := range addressList {
+		addressArray = append(addressArray, addr.Address)
+	}
+	return addressArray, nil
+}
+
+func(w RpcWrapper) getAddressesByQuery(query *sqlc.Cnd) ([]string, error) {
+	mongo, err := new(sqld.MGOManager).Get()
+	if err != nil {
+		return nil, err
+	}
+	defer mongo.Close()
+
+	addressList := []*model.OwAddress{}
+	if err := mongo.FindList(query, &addressList); err != nil {
+		return nil, util.Error("获取账号地址列表统计数失败")
+	}
+
+	addressArray := make([]string, 0)
+	for _, addr := range addressList {
+		addressArray = append(addressArray, addr.Address)
+	}
+
+	return addressArray, nil
+}
+
+func (w *RpcWrapper) GetAddressListContainsBalance(offset, limit int, cols ...interface{}) ([]string, error) {
+	if len(w.AppID) == 0 {
+		return nil, util.Error("Wrapper AppID is nil")
+	}
+	if len(w.Symbol) == 0 {
+		return nil, util.Error("Wrapper Symbol is nil")
+	}
+
+	getTokenAddress := false
+	sql      := sqlc.M(model.OwAddress{}).Eq("appID", w.AppID).Eq("symbol", w.Symbol).Eq("state", 1).NotEq("balance", "0")
+	sqlToken := sqlc.M(model.OwAddressToken{}).Eq("appID", w.AppID).Eq("symbol", w.Symbol).Eq("state", 1).NotEq("balance", "0")
+
+	if limit <= 0 {
+		limit = 100
+	}
+
+	sql.Offset(int64(offset), int64(limit))
+	sqlToken.Offset(int64(offset), int64(limit))
+
+	if cols != nil && len(cols) > 0 {
+		for k := 0; k < len(cols); k += 2 {
+			key, ok := cols[k].(string)
+			if !ok || len(key) == 0 {
+				continue
+			}
+			if key == "ContractID" {
+				getTokenAddress = true
+				sqlToken.Eq(util.LowerFirst(key), cols[k+1])
+				continue
+			}
+			sql.Eq(util.LowerFirst(key), cols[k+1])
+			sqlToken.Eq(util.LowerFirst(key), cols[k+1])
+
+		}
+	}
+
+	if getTokenAddress {
+		return w.getAddressesByQuery(sql)
+	} else {
+		return w.getTokenAddressesByQuery(sqlToken)
+	}
+	return nil, fmt.Errorf("something error not match mode")
+}
+
 func (w *RpcWrapper) GetAddressList(offset, limit int, cols ...interface{}) ([]*openwallet.Address, error) {
 	if len(w.AppID) == 0 {
 		return nil, util.Error("Wrapper AppID is nil")
